@@ -287,9 +287,13 @@ const getAgentHandler: RequestHandler<{ agent: keyof AgentMap }> = (
         res.status(401).json(validateVariablesResponse);
         return;
       }
+      console.log("setting variables");
       variables = validateVariablesResponse.variables;
+      console.log("getting variables", {variables});
     }
-  
+
+    console.log("executing tool");
+    console.log("agentHandler", {agentHandler});
     const result = await (agentHandler as any).executeTool(
       toolName,
       parameters,

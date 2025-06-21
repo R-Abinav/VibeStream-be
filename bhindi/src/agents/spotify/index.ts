@@ -27,9 +27,13 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         parameters: SpotifyTools[K],
         variables?: Record<string, string>
     ): Promise<any> {
+        console.log("executeTool impl");
+        console.log("executeTool toolName", {toolName});
+        console.log("executeTool parameters", {parameters});
+        console.log("executeTool variables", {variables});
         // Validate required variables
-        const spotifyAccessToken = variables?.["x-spotify-access"];
-        const spotifyRefreshToken = variables?.["x-spotify-refresh"];
+        const spotifyAccessToken = variables?.["spotify-access"];
+        const spotifyRefreshToken = variables?.["spotify-refresh"];
 
         console.log(`xo spotifyAccessToken : ${spotifyAccessToken}`);
         console.log(`xo spotifyRefreshToken : ${spotifyRefreshToken}`);
