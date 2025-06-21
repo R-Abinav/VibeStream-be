@@ -48,34 +48,34 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         try {
             switch (toolName) {
                 case "search_tracks":
-                    return await this.searchTracks(parameters as any, spotifyAccessToken);
+                    return await this.searchTracks(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "search_artists":
                     return await this.searchArtists(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "create_playlist":
-                    return await this.createPlaylist(parameters as any, spotifyAccessToken);
+                    return await this.createPlaylist(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "add_tracks_to_playlist":
-                    return await this.addTracksToPlaylist(parameters as any, spotifyAccessToken);
+                    return await this.addTracksToPlaylist(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "remove_tracks_from_playlist":
-                    return await this.removeTracksFromPlaylist(parameters as any, spotifyAccessToken);
+                    return await this.removeTracksFromPlaylist(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "get_playlist_items":
-                    return await this.getPlaylistItems(parameters as any, spotifyAccessToken);
+                    return await this.getPlaylistItems(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "get_current_playback":
-                    return await this.getCurrentPlayback(spotifyAccessToken);
+                    return await this.getCurrentPlayback(spotifyAccessToken, spotifyRefreshToken);
                 
                 case "get_recommendations":
-                    return await this.getRecommendations(parameters as any, spotifyAccessToken);
+                    return await this.getRecommendations(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "get_recently_played":
-                    return await this.getRecentlyPlayed(parameters as any, spotifyAccessToken);
+                    return await this.getRecentlyPlayed(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "get_user_profile":
-                    return await this.getUserProfile(spotifyAccessToken);
+                    return await this.getUserProfile(spotifyAccessToken, spotifyRefreshToken);
 
                 default:
                     return createErrorResponse(
@@ -128,7 +128,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         }
     }
 
-    private async searchTracks(params: { query: string; limit?: number; offset?: number }, token: string) {
+    private async searchTracks(params: { query: string; limit?: number; offset?: number }, token: string, refresh_token: string): Promise<any> {
         console.log(`xo token : ${token}`);
         const searchParams = new URLSearchParams({
             q: params.query,
@@ -144,6 +144,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         });
 
         console.log(`xo result : ${result}`);
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.searchTracks(params, newAccessToken, refresh_token);
+        }
 
         if (!result.success) {
             console.log(`xo error : ${result.error}`);
@@ -190,7 +199,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async createPlaylist(params: { name: string; description?: string; public?: boolean }, token: string) {
+    private async createPlaylist(params: { name: string; description?: string; public?: boolean }, token: string, refresh_token: string): Promise<any> {
         const result = await this.makeApiCall('/me/playlists', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
@@ -201,6 +210,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             }),
         });
 
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.createPlaylist(params, newAccessToken, refresh_token);
+        }
+
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
@@ -208,7 +226,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async addTracksToPlaylist(params: { playlist_id: string; track_ids: string[]; position?: number }, token: string) {
+    private async addTracksToPlaylist(params: { playlist_id: string; track_ids: string[]; position?: number }, token: string, refresh_token: string): Promise<any> {
         const uris = params.track_ids.map(id => `spotify:track:${id}`);
         
         const result = await this.makeApiCall(`/playlists/${params.playlist_id}/tracks`, {
@@ -220,6 +238,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             }),
         });
 
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.addTracksToPlaylist(params, newAccessToken, refresh_token);
+        }
+
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
@@ -227,7 +254,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async removeTracksFromPlaylist(params: { playlist_id: string; track_ids: string[] }, token: string) {
+    private async removeTracksFromPlaylist(params: { playlist_id: string; track_ids: string[] }, token: string, refresh_token: string): Promise<any> {
         const tracks = params.track_ids.map(id => ({ uri: `spotify:track:${id}` }));
         
         const result = await this.makeApiCall(`/playlists/${params.playlist_id}/tracks`, {
@@ -236,6 +263,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             body: JSON.stringify({ tracks }),
         });
 
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.removeTracksFromPlaylist(params, newAccessToken, refresh_token);
+        }
+
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
@@ -243,7 +279,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async getPlaylistItems(params: { playlist_id: string; limit?: number; offset?: number }, token: string) {
+    private async getPlaylistItems(params: { playlist_id: string; limit?: number; offset?: number }, token: string, refresh_token: string): Promise<any> {
         const searchParams = new URLSearchParams({
             ...(params.limit && { limit: params.limit.toString() }),
             ...(params.offset && { offset: params.offset.toString() }),
@@ -253,6 +289,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             headers: { 'Authorization': `Bearer ${token}` },
         });
 
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.getPlaylistItems(params, newAccessToken, refresh_token);
+        }
+
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
@@ -260,11 +305,20 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async getCurrentPlayback(token: string) {
+    private async getCurrentPlayback(token: string, refresh_token: string): Promise<any> {
         const result = await this.makeApiCall('/me/player', {
             headers: { 'Authorization': `Bearer ${token}` },
         });
 
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.getCurrentPlayback(newAccessToken, refresh_token);
+        }
+
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
@@ -272,7 +326,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async getRecommendations(params: { seed_genres: string[]; limit?: number; market?: string }, token: string) {
+    private async getRecommendations(params: { seed_genres: string[]; limit?: number; market?: string }, token: string, refresh_token: string): Promise<any> {
         const searchParams = new URLSearchParams({
             seed_genres: params.seed_genres.join(','),
             ...(params.limit && { limit: params.limit.toString() }),
@@ -283,6 +337,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             headers: { 'Authorization': `Bearer ${token}` },
         });
 
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.getRecommendations(params, newAccessToken, refresh_token);
+        }
+
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
@@ -290,7 +353,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async getRecentlyPlayed(params: { limit?: number }, token: string) {
+    private async getRecentlyPlayed(params: { limit?: number }, token: string, refresh_token: string): Promise<any> {
         const searchParams = new URLSearchParams({
             ...(params.limit && { limit: params.limit.toString() }),
         });
@@ -299,6 +362,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             headers: { 'Authorization': `Bearer ${token}` },
         });
 
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.getRecentlyPlayed(params, newAccessToken, refresh_token);
+        }
+
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
@@ -306,10 +378,19 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async getUserProfile(token: string) {
+    private async getUserProfile(token: string, refresh_token: string): Promise<any> {
         const result = await this.makeApiCall('/me', {
             headers: { 'Authorization': `Bearer ${token}` },
         });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.getUserProfile(newAccessToken, refresh_token);
+        }
 
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
