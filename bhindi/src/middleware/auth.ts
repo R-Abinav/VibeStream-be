@@ -5,11 +5,11 @@ import { SupportedOAuth } from "../types";
 import ENV from "../../../config/env.config";
 
 export const checkApiKey = (req: Request) => {
-  const apiKey = req.headers["x-api-key"];
+  // const apiKey = req.headers["x-api-key"];
 
-  if (!apiKey || apiKey !== ENV.SERVER_API_KEY) {
-    return createErrorResponse("Invalid API key", 401);
-  }
+  // if (!apiKey || apiKey !== ENV.SERVER_API_KEY) {
+  //   return createErrorResponse("Invalid API key", 401);
+  // }
 
   return { success: true };
 };
