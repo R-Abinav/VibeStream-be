@@ -1,7 +1,9 @@
 import express from 'express';
-import ENV from './config/env.config.js';
+//@ts-ignore
+import ENV from './config/env.config.ts';
 
 import crypto from 'crypto';
+//@ts-ignore
 import cors from 'cors';
 
 import querystring from 'querystring';
@@ -45,10 +47,16 @@ app.get('/health', (req, res) => {
 });
 
 //@ts-ignore
+// - `user-read-private` - Read user profile
+// - `user-read-recently-played` - Get recently played tracks
+// - `playlist-modify-private` - Create/modify private playlists
+// - `playlist-read-private` - Read private playlists
+// - `user-read-playback-state` - Get current playback state
+// - `playlist-modify-public` - Create/modify public playlists
 app.get('/api/spotify-login', (req, res) => {
     try{
         console.log("Spotify Login");
-        const scope = 'user-read-private user-read-email user-top-read';
+        const scope = 'user-read-recently-played user-read-private user-read-email user-top-read playlist-modify-private playlist-read-private user-read-playback-state playlist-modify-public';
         const state = generateSecureState();
 
         const authUrl = 'https://accounts.spotify.com/authorize?' + querystring.stringify({
@@ -126,6 +134,7 @@ app.get('/api/user-info', async (req, res) => {
 
         res.json(userResponse.data);
     }catch(err){
+        //@ts-ignore
         console.error('Fetching user info error:', err.response?.data || err.message);
         res.status(500).json({ error: 'Failed to fetch user info' });
     }
@@ -156,6 +165,7 @@ app.post('/api/refresh-token', async (req, res) => {
             expires_in: response.data.expires_in 
         });
     }catch(err){
+        //@ts-ignore
         console.error('Refresh error:', err.response?.data || err.message);
         res.status(401).json({ error: 'Token refresh failed' });
     }

@@ -2,12 +2,11 @@
   "name": "soundwave-be",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "type": "module",
+  "main": "app.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "npx ts-node app.ts",
+    "dev": "npx nodemon app.ts"
   },
   "keywords": [],
   "author": "",
