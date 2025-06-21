@@ -1,3 +1,4 @@
+import { refreshToken } from "../../utils/refreshToken";
 import { createErrorResponse, createTextResponse } from "../../utils/response";
 import { BaseAgentHandler } from "../base-agent";
 import { spotifyTools, SpotifyTools } from "./tools";
@@ -43,7 +44,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
                     return await this.searchTracks(parameters as any, spotifyAccessToken);
                 
                 case "search_artists":
-                    return await this.searchArtists(parameters as any, spotifyAccessToken);
+                    return await this.searchArtists(parameters as any, spotifyAccessToken, spotifyRefreshToken);
                 
                 case "create_playlist":
                     return await this.createPlaylist(parameters as any, spotifyAccessToken);
@@ -139,7 +140,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async searchArtists(params: { query: string; limit?: number; offset?: number }, token: string) {
+    private async searchArtists(params: { query: string; limit?: number; offset?: number }, token: string, refresh_token: string) {
         const searchParams = new URLSearchParams({
             q: params.query,
             type: 'artist',
@@ -150,6 +151,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         const result = await this.makeApiCall(`/search?${searchParams}`, {
             headers: { 'Authorization': `Bearer ${token}` },
         });
+
+        //Failure logic
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            return await this.searchArtists(params, newAccessToken, refresh_token);
+        }
 
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);

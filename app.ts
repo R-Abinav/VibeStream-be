@@ -145,34 +145,34 @@ app.get('/api/user-info', async (req, res) => {
 
 //Refresh token
 //@ts-ignore
-app.post('/api/refresh-token', async (req, res) => {
-    try{
-        const { refresh_token } = req.body;
+// app.post('/api/refresh-token', async (req, res) => {
+//     try{
+//         const { refresh_token } = req.body;
 
-        const postHeaders = {
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${Buffer.from(`${ENV.SPOTIFY_CLIENT_ID}:${ENV.SPOTIFY_CLIENT_SECRET}`).toString('base64')}`
-        }
+//         const postHeaders = {
+//             'Content-Type': 'application/json',
+//             'Authorization': `Basic ${Buffer.from(`${ENV.SPOTIFY_CLIENT_ID}:${ENV.SPOTIFY_CLIENT_SECRET}`).toString('base64')}`
+//         }
 
-        const postForm = {
-            grant_type: 'refresh_token',
-            refresh_token: refresh_token,
-        }
+//         const postForm = {
+//             grant_type: 'refresh_token',
+//             refresh_token: refresh_token,
+//         }
 
-        //@ts-ignore
-        const response = await axios.post('https://accounts.spotify.com/api/token', postForm, postHeaders, { json: true });
+//         //@ts-ignore
+//         const response = await axios.post('https://accounts.spotify.com/api/token', postForm, postHeaders, { json: true });
 
-        console.log("Response for refresh token -> ",response);
-        res.json({
-            access_token: response.data.access_token,
-            expires_in: response.data.expires_in 
-        });
-    }catch(err){
-        //@ts-ignore
-        console.error('Refresh error:', err.response?.data || err.message);
-        res.status(401).json({ error: 'Token refresh failed' });
-    }
-})
+//         console.log("Response for refresh token -> ",response);
+//         res.json({
+//             access_token: response.data.access_token,
+//             expires_in: response.data.expires_in 
+//         });
+//     }catch(err){
+//         //@ts-ignore
+//         console.error('Refresh error:', err.response?.data || err.message);
+//         res.status(401).json({ error: 'Token refresh failed' });
+//     }
+// })
 
 // GET /:agent
 const getAgentHandler: RequestHandler<{ agent: keyof AgentMap }> = (
