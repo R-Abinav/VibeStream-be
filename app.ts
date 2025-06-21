@@ -37,13 +37,14 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-
+//@ts-ignore
 app.get('/health', (req, res) => {
     return res.status(200).json({ 
         message: 'Works bhai! Healthy' 
     });
 });
 
+//@ts-ignore
 app.get('/api/spotify-login', (req, res) => {
     try{
         console.log("Spotify Login");
@@ -66,14 +67,18 @@ app.get('/api/spotify-login', (req, res) => {
     }
 });
 
+//@ts-ignore
 app.get('/api/callback', async (req, res) => {
     try{
         const { code, state, error } = req.query;
 
         //Validate state
+        //@ts-ignore
         if(!state || !stateStore.has(state.split('.')[0])){
             return res.status(400).redirect(`${ENV.CLIENT_URL}/login?error=invalid_state`);
         }
+
+        //@ts-ignore
         stateStore.delete(state.split('.')[0]);
 
         if(error){
@@ -94,6 +99,7 @@ app.get('/api/callback', async (req, res) => {
             grant_type: 'authorization_code'
         }
 
+        //@ts-ignore
         const tokenResponse = await axios.post('https://accounts.spotify.com/api/token', formData, authHeader, { json: true });
 
         res.redirect(`${ENV.CLIENT_URL}/?access_token=${tokenResponse.data.access_token}&refresh_token=${tokenResponse.data.refresh_token}&expires_in=${tokenResponse.data.expires_in}`);
@@ -103,6 +109,7 @@ app.get('/api/callback', async (req, res) => {
     }
 });
 
+//@ts-ignore
 app.get('/api/user-info', async (req, res) => {
     try{
         const accessToken = req.headers.authorization?.split(' ')[1];
@@ -125,6 +132,7 @@ app.get('/api/user-info', async (req, res) => {
 });
 
 //Refresh token
+//@ts-ignore
 app.post('/api/refresh-token', async (req, res) => {
     try{
         const { refresh_token } = req.body;
@@ -139,6 +147,7 @@ app.post('/api/refresh-token', async (req, res) => {
             refresh_token: refresh_token,
         }
 
+        //@ts-ignore
         const response = await axios.post('https://accounts.spotify.com/api/token', postForm, postHeaders, { json: true });
 
         console.log("Response for refresh token -> ",response);
@@ -152,6 +161,7 @@ app.post('/api/refresh-token', async (req, res) => {
     }
 })
 
+//@ts-ignore
 app.listen(port, "127.0.0.1", () => {
     console.log(`Server is running on ${port} in ${mode} mode`);
 });
