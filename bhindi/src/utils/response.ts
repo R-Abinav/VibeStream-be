@@ -46,7 +46,7 @@ export const createErrorResponse = (
  */
 export const createTextResponse = (textData: object) => {
   return createSuccessResponse("text", {
-    text: textData,
+    text: JSON.stringify(textData),
   });
 };
 
