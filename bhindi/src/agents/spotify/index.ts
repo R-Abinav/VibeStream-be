@@ -17,8 +17,8 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
 
     constructor() {
         super(spotifyTools, [], [
-            "spotify-access",
-            "spotify-refresh"
+            "api-spotify-access",
+            "api-spotify-refresh"
         ]);
     }
 
@@ -28,8 +28,8 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         variables?: Record<string, string>
     ): Promise<any> {
         // Validate required variables
-        const spotifyAccessToken = variables?.["spotify-access"];
-        const spotifyRefreshToken = variables?.["spotify-refresh"];
+        const spotifyAccessToken = variables?.["api-spotify-access"];
+        const spotifyRefreshToken = variables?.["api-spotify-refresh"];
 
         console.log(`xo spotifyAccessToken : ${spotifyAccessToken}`);
         console.log(`xo spotifyRefreshToken : ${spotifyRefreshToken}`);
