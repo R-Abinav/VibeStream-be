@@ -1,6 +1,6 @@
 import express from 'express';
 //@ts-ignore
-import ENV from './config/env.config.ts';
+import ENV from './config/env.config';
 
 import crypto from 'crypto';
 //@ts-ignore
