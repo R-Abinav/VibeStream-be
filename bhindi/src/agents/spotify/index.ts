@@ -17,8 +17,8 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
 
     constructor() {
         super(spotifyTools, [], [
-            "api-spotify-access",
-            "api-spotify-refresh"
+            "spotify-access",
+            "spotify-refresh"
         ]);
     }
 
