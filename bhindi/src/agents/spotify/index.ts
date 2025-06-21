@@ -31,6 +31,9 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         const spotifyAccessToken = variables?.["spotify-access"];
         const spotifyRefreshToken = variables?.["spotify-refresh"];
 
+        console.log(`xo spotifyAccessToken : ${spotifyAccessToken}`);
+        console.log(`xo spotifyRefreshToken : ${spotifyRefreshToken}`);
+
         if (!spotifyAccessToken || !spotifyRefreshToken) {
             return createErrorResponse(
                 "Need spotify token to be able to connect to spotify",
