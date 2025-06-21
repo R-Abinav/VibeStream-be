@@ -297,9 +297,9 @@ const getAgentHandler: RequestHandler<{ agent: keyof AgentMap }> = (
     const result = await (agentHandler as any).executeTool(
       toolName,
       parameters,
-      oauthTokens,
       variables
     );
+    console.log("result", {result});
     if (result.success) {
       console.log("result success", {result});
       res.json(result).status(200);
