@@ -147,10 +147,13 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             ...(params.limit && { limit: params.limit.toString() }),
             ...(params.offset && { offset: params.offset.toString() }),
         });
+        console.log("Search Artists......");
 
         const result = await this.makeApiCall(`/search?${searchParams}`, {
             headers: { 'Authorization': `Bearer ${token}` },
         });
+
+        console.log("Got the result!: ", result);
 
         //Failure logic
         if(result.error?.code === 401) {
@@ -158,13 +161,16 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             if(!newAccessToken) {
                 return createErrorResponse("Failed to refresh token", 401);
             }
+            console.log("Refreshed token!: ", newAccessToken);
             return await this.searchArtists(params, newAccessToken, refresh_token);
         }
 
         if (!result.success) {
+            console.log("Error!: ", result.error);
             return createErrorResponse(result.error!.message, result.error!.code);
         }
 
+        console.log("Success!: ", result.data);
         return createTextResponse({ data: result.data });
     }
 
