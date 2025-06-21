@@ -5,7 +5,7 @@ import ENV from "../../../config/env.config";
 export const refreshToken = async (refreshToken: string): Promise<string | null> => {
     try{
         const postHeaders = {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
             'Authorization': `Basic ${Buffer.from(`${ENV.SPOTIFY_CLIENT_ID}:${ENV.SPOTIFY_CLIENT_SECRET}`).toString('base64')}`
         }
 
