@@ -11,6 +11,7 @@ const ENV = {
     SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
     STATE_SECRET: process.env.STATE_SECRET || crypto.randomBytes(32).toString('hex'),
     REDIRECT_URI: process.env.REDIRECT_URI,
+    SERVER_API_KEY: process.env.SERVER_API_KEY,
 }
 
 export default ENV;

@@ -1,7 +1,8 @@
 import { Request } from "express";
-import { ENV } from "../utils/env";
+
 import { createErrorResponse } from "../utils/response";
 import { SupportedOAuth } from "../types";
+import ENV from "../../../config/env.config";
 
 export const checkApiKey = (req: Request) => {
   const apiKey = req.headers["x-api-key"];

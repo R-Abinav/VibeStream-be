@@ -122,6 +122,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
     }
 
     private async searchTracks(params: { query: string; limit?: number; offset?: number }, token: string) {
+        console.log(`xo token : ${token}`);
         const searchParams = new URLSearchParams({
             q: params.query,
             type: 'track',
@@ -129,18 +130,26 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             ...(params.offset && { offset: params.offset.toString() }),
         });
 
+        console.log(`xo searchParams : ${searchParams}`);
+
         const result = await this.makeApiCall(`/search?${searchParams}`, {
             headers: { 'Authorization': `Bearer ${token}` },
         });
 
+        console.log(`xo result : ${result}`);
+
         if (!result.success) {
+            console.log(`xo error : ${result.error}`);
             return createErrorResponse(result.error!.message, result.error!.code);
         }
 
-        return createTextResponse({ data: result.data });
+        console.log(`xo successs result.data : ${result.data}`);
+
+        return createTextResponse({ data: `successful got respose ${result.data}`});
     }
 
     private async searchArtists(params: { query: string; limit?: number; offset?: number }, token: string, refresh_token: string): Promise<any>{
+        console.log(`${token}`);
         const searchParams = new URLSearchParams({
             q: params.query,
             type: 'artist',
