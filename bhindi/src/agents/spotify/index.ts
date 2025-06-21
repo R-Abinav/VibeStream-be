@@ -28,8 +28,8 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         variables?: Record<string, string>
     ): Promise<any> {
         // Validate required variables
-        const spotifyAccessToken = variables?.["api-spotify-access"];
-        const spotifyRefreshToken = variables?.["api-spotify-refresh"];
+        const spotifyAccessToken = variables?.["x-spotify-access"];
+        const spotifyRefreshToken = variables?.["x-spotify-refresh"];
 
         console.log(`xo spotifyAccessToken : ${spotifyAccessToken}`);
         console.log(`xo spotifyRefreshToken : ${spotifyRefreshToken}`);

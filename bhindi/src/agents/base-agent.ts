@@ -29,6 +29,10 @@ export abstract class BaseAgentHandler<T extends Record<string, any>>
   }
 
   getAgentInfo() {
+    console.log("getAgentInfo impl");
+    console.log("tools impl", this.tools);
+    console.log("oauth impl", this.oauth);
+    console.log("variables impl", this.variables);
     return {
       tools: this.tools,
       oauth: this.oauth,

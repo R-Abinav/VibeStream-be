@@ -194,9 +194,14 @@ const getAgentHandler: RequestHandler<{ agent: keyof AgentMap }> = (
     req,
     res
   ) => {
+    console.log("getToolsHandler");
     try {
       const { agent } = req.params;
+      console.log("agent", agent);
+
       const agentHandler = AgentRegistry.getInstance().getAgent(agent);
+
+      console.log("agentHandler", agentHandler);
   
       if (!agentHandler) {
         res
@@ -206,6 +211,7 @@ const getAgentHandler: RequestHandler<{ agent: keyof AgentMap }> = (
       }
   
       const response = agentHandler.getTools();
+      console.log("response tools", response);
       res.json(response);
     } catch (error) {
       res
@@ -223,35 +229,60 @@ const getAgentHandler: RequestHandler<{ agent: keyof AgentMap }> = (
     agent: keyof AgentMap;
     toolName: string;
   }> = async (req, res) => {
+
+    console.log("executeToolHandler");
+    console.log("req", {req});
+    console.log("res", {res});
     const { agent, toolName } = req.params;
+
+    console.log("executeToolHandler");
+    console.log("agent", {agent});
+    console.log("toolName", {toolName});
+    
     const parameters = req.body;
+
+    console.log("parameters", parameters);
   
     const agentHandler = AgentRegistry.getInstance().getAgent(agent);
+    console.log("agentHandler", {agentHandler});
     if (!agentHandler) {
       res.status(404).json(createErrorResponse(`Agent ${agent} not found`, 404));
       return;
     }
+
+    console.log("agent validation done");
   
     const validateApiKeyResponse = checkApiKey(req);
     if (!validateApiKeyResponse.success) {
       res.status(401).json(validateApiKeyResponse);
       return;
     }
+
+    console.log("api key validation done");
   
     const agentInfo = agentHandler.getAgentInfo();
+    console.log("agentInfo", {agentInfo});
     let oauthTokens: Record<string, string> | undefined;
     if (agentInfo.oauth.length > 0) {
+      console.log("oauth validation");
       const validateOAuthTokensResponse = checkOAuthTokens(req, agentInfo.oauth);
+      console.log("validateOAuthTokensResponse", {validateOAuthTokensResponse});
       if (!validateOAuthTokensResponse.success) {
         res.status(401).json(validateOAuthTokensResponse);
         return;
       }
       oauthTokens = validateOAuthTokensResponse.tokens;
+      console.log("oauthTokens", {oauthTokens});
     }
+
+
   
     let variables: Record<string, string> | undefined;
+    console.log("agentInfo.variables", {agentInfo});
     if (agentInfo.variables.length > 0) {
+      console.log("variables validation");
       const validateVariablesResponse = checkVariables(req, agentInfo.variables);
+      console.log("validateVariablesResponse", {validateVariablesResponse});
       if (!validateVariablesResponse.success) {
         res.status(401).json(validateVariablesResponse);
         return;
@@ -266,8 +297,10 @@ const getAgentHandler: RequestHandler<{ agent: keyof AgentMap }> = (
       variables
     );
     if (result.success) {
+      console.log("result success", {result});
       res.json(result).status(200);
     } else {
+      console.log("result error", {result});
       res.json(result).status(result.error.code);
     }
   };
