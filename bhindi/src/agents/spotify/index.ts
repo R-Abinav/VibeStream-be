@@ -140,7 +140,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
-    private async searchArtists(params: { query: string; limit?: number; offset?: number }, token: string, refresh_token: string): Promise<any> {
+    private async searchArtists(params: { query: string; limit?: number; offset?: number }, token: string, refresh_token: string): Promise<any>{
         const searchParams = new URLSearchParams({
             q: params.query,
             type: 'artist',
