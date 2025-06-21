@@ -15,7 +15,10 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
     private readonly baseUrl = "https://api.spotify.com/v1";
 
     constructor() {
-        super(spotifyTools, [], []);
+        super(spotifyTools, [], [
+            "spotify-access-token",
+            "spotify-refresh-token"
+        ]);
     }
 
     async executeTool<K extends keyof SpotifyTools>(
@@ -24,9 +27,10 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         variables?: Record<string, string>
     ): Promise<any> {
         // Validate required variables
-        const spotifyToken = variables?.["spotify-token"];
+        const spotifyAccessToken = variables?.["spotify-access-token"];
+        const spotifyRefreshToken = variables?.["spotify-refresh-token"];
 
-        if (!spotifyToken) {
+        if (!spotifyAccessToken || !spotifyRefreshToken) {
             return createErrorResponse(
                 "Need spotify token to be able to connect to spotify",
                 400
@@ -36,34 +40,34 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         try {
             switch (toolName) {
                 case "search_tracks":
-                    return await this.searchTracks(parameters as any, spotifyToken);
+                    return await this.searchTracks(parameters as any, spotifyAccessToken);
                 
                 case "search_artists":
-                    return await this.searchArtists(parameters as any, spotifyToken);
+                    return await this.searchArtists(parameters as any, spotifyAccessToken);
                 
                 case "create_playlist":
-                    return await this.createPlaylist(parameters as any, spotifyToken);
+                    return await this.createPlaylist(parameters as any, spotifyAccessToken);
                 
                 case "add_tracks_to_playlist":
-                    return await this.addTracksToPlaylist(parameters as any, spotifyToken);
+                    return await this.addTracksToPlaylist(parameters as any, spotifyAccessToken);
                 
                 case "remove_tracks_from_playlist":
-                    return await this.removeTracksFromPlaylist(parameters as any, spotifyToken);
+                    return await this.removeTracksFromPlaylist(parameters as any, spotifyAccessToken);
                 
                 case "get_playlist_items":
-                    return await this.getPlaylistItems(parameters as any, spotifyToken);
+                    return await this.getPlaylistItems(parameters as any, spotifyAccessToken);
                 
                 case "get_current_playback":
-                    return await this.getCurrentPlayback(spotifyToken);
+                    return await this.getCurrentPlayback(spotifyAccessToken);
                 
                 case "get_recommendations":
-                    return await this.getRecommendations(parameters as any, spotifyToken);
+                    return await this.getRecommendations(parameters as any, spotifyAccessToken);
                 
                 case "get_recently_played":
-                    return await this.getRecentlyPlayed(parameters as any, spotifyToken);
+                    return await this.getRecentlyPlayed(parameters as any, spotifyAccessToken);
                 
                 case "get_user_profile":
-                    return await this.getUserProfile(spotifyToken);
+                    return await this.getUserProfile(spotifyAccessToken);
 
                 default:
                     return createErrorResponse(
