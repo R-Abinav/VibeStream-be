@@ -161,7 +161,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
 
         console.log(`xo successs result.data : ${result.data}`);
 
-        return createTextResponse({ data: `successful got respose ${result.data}`});
+        return createTextResponse({ data: result.data });
     }
 
     private async searchArtists(params: { query: string; limit?: number; offset?: number }, token: string, refresh_token: string): Promise<any>{
@@ -323,6 +323,15 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
 
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.getCurrentPlayback(newAccessToken, refresh_token);
+        }
+
         return createTextResponse({ data: result.data });
     }
 
@@ -395,7 +404,7 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         if (!result.success) {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
-
+    
         return createTextResponse({ data: result.data });
     }
 }
