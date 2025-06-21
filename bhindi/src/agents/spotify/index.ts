@@ -359,7 +359,8 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
             return createErrorResponse(result.error!.message, result.error!.code);
         }
 
-        return createTextResponse({ data: result.data });
+        //return createTextResponse({ data: result.data });
+        return createTextResponse(result.data);
     }
 
     private async getRecentlyPlayed(params: { limit?: number }, token: string, refresh_token: string): Promise<any> {
