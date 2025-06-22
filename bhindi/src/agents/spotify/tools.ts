@@ -41,6 +41,45 @@ export interface SpotifyTools {
         limit?: number;
     };
     get_user_profile: Record<string, never>; // current user
+    get_current_user_playlists: {
+        limit?: number;
+        offset?: number;
+    };
+    add_custom_playlist_cover_image: {
+        playlist_id: string;
+        image_base64: string; // Raw Base64 string (not data URI)
+    };
+    get_available_genre_seeds: Record<string, never>;
+    save_track_for_user: {
+        track_ids: string[]; // ≤ 50 Spotify track IDs
+    };
+    check_user_saved_tracks: {
+        track_ids: string[]; // ≤ 50 track IDs
+    };
+    get_user_saved_tracks: {
+        limit?: number;
+        offset?: number;
+        market?: string;
+    };
+    get_new_releases: {
+        limit?: number;
+        offset?: number;
+        country?: string;
+    };
+    save_album_for_user: {
+        album_ids: string[]; // ≤ 50 album IDs
+    };
+    get_artist_albums: {
+        artist_id: string;
+        include_groups?: string; // comma-separated list per Spotify docs
+        market?: string;
+        limit?: number;
+        offset?: number;
+    };
+    get_artist_top_tracks: {
+        artist_id: string;
+        market: string; // Required
+    };
 }
 
 export const spotifyTools: Tool[] = [
@@ -166,5 +205,132 @@ export const spotifyTools: Tool[] = [
         name: "get_user_profile",
         description: "Get current user's profile information",
         parameters: { type: "object", properties: {}, required: [] },
+    },
+    {
+        name: "get_current_user_playlists",
+        description: "Get playlists owned or followed by the current user (GET /me/playlists)",
+        parameters: {
+            type: "object",
+            properties: {
+                limit: { type: "number", description: "Number of playlists to return (1–50)" },
+                offset: { type: "number", description: "Offset for paging, multiple of limit" },
+            },
+            required: [],
+        },
+    },
+    {
+        name: "add_custom_playlist_cover_image",
+        description: "Upload a custom JPEG image (Base64 encoded) as a playlist cover",
+        parameters: {
+            type: "object",
+            properties: {
+                playlist_id: { type: "string", description: "Target playlist ID" },
+                image_base64: { type: "string", description: "Base64-encoded JPEG image data (no data URI prefix)" },
+            },
+            required: ["playlist_id", "image_base64"],
+        },
+    },
+    {
+        name: "get_available_genre_seeds",
+        description: "Retrieve the list of available genre seeds for recommendations",
+        parameters: { type: "object", properties: {}, required: [] },
+    },
+    {
+        name: "save_track_for_user",
+        description: "Save one or more tracks to the current user's library",
+        parameters: {
+            type: "object",
+            properties: {
+                track_ids: {
+                    type: "array",
+                    description: "Array of track IDs to save (max 50)",
+                    items: { type: "string" },
+                },
+            },
+            required: ["track_ids"],
+        },
+    },
+    {
+        name: "check_user_saved_tracks",
+        description: "Check if the current user has saved particular tracks",
+        parameters: {
+            type: "object",
+            properties: {
+                track_ids: {
+                    type: "array",
+                    description: "Array of track IDs to check (max 50)",
+                    items: { type: "string" },
+                },
+            },
+            required: ["track_ids"],
+        },
+    },
+    {
+        name: "get_user_saved_tracks",
+        description: "Retrieve tracks saved in the user's library",
+        parameters: {
+            type: "object",
+            properties: {
+                limit: { type: "number", description: "Number of items to return (1–50)" },
+                offset: { type: "number", description: "Offset for paging" },
+                market: { type: "string", description: "Market code (optional)" },
+            },
+            required: [],
+        },
+    },
+    {
+        name: "get_new_releases",
+        description: "Get a list of new album releases featured on Spotify",
+        parameters: {
+            type: "object",
+            properties: {
+                limit: { type: "number", description: "Number of items to return (1–50)" },
+                offset: { type: "number", description: "Offset for paging" },
+                country: { type: "string", description: "Country code (optional)" },
+            },
+            required: [],
+        },
+    },
+    {
+        name: "save_album_for_user",
+        description: "Save one or more albums to the user's library",
+        parameters: {
+            type: "object",
+            properties: {
+                album_ids: {
+                    type: "array",
+                    description: "Array of album IDs to save (max 50)",
+                    items: { type: "string" },
+                },
+            },
+            required: ["album_ids"],
+        },
+    },
+    {
+        name: "get_artist_albums",
+        description: "Get an artist's albums",
+        parameters: {
+            type: "object",
+            properties: {
+                artist_id: { type: "string", description: "Spotify artist ID" },
+                include_groups: { type: "string", description: "Filter by album groups, comma separated" },
+                market: { type: "string", description: "Market code" },
+                limit: { type: "number", description: "Number of items (1–50)" },
+                offset: { type: "number", description: "Offset for paging" },
+            },
+            required: ["artist_id"],
+        },
+    },
+    {
+        name: "get_artist_top_tracks",
+        description: "Get an artist's top tracks by market",
+        parameters: {
+            type: "object",
+            properties: {
+                artist_id: { type: "string", description: "Spotify artist ID" },
+                market: { type: "string", description: "Market code (required by Spotify)" },
+            },
+            required: ["artist_id", "market"],
+        },
     },
 ];

@@ -77,6 +77,36 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
                 case "get_user_profile":
                     return await this.getUserProfile(spotifyAccessToken, spotifyRefreshToken);
 
+                case "get_current_user_playlists":
+                    return await this.getCurrentUserPlaylists(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
+                case "add_custom_playlist_cover_image":
+                    return await this.addCustomPlaylistCoverImage(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
+                case "get_available_genre_seeds":
+                    return await this.getAvailableGenreSeeds(spotifyAccessToken, spotifyRefreshToken);
+
+                case "save_track_for_user":
+                    return await this.saveTrackForUser(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
+                case "check_user_saved_tracks":
+                    return await this.checkUserSavedTracks(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
+                case "get_user_saved_tracks":
+                    return await this.getUserSavedTracks(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
+                case "get_new_releases":
+                    return await this.getNewReleases(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
+                case "save_album_for_user":
+                    return await this.saveAlbumForUser(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
+                case "get_artist_albums":
+                    return await this.getArtistAlbums(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
+                case "get_artist_top_tracks":
+                    return await this.getArtistTopTracks(parameters as any, spotifyAccessToken, spotifyRefreshToken);
+
                 default:
                     return createErrorResponse(
                         `Tool ${String(toolName)} not implemented`,
@@ -101,21 +131,30 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
                 ...options,
             });
 
-            const data = await response.json();
+            // Safely handle empty or non-JSON bodies to avoid "Unexpected end of JSON input"
+            let parsed: any = null;
+            const raw = await response.text();
+            if (raw) {
+                try {
+                    parsed = JSON.parse(raw);
+                } catch (_) {
+                    parsed = raw; // Keep plain text if not JSON
+                }
+            }
 
             if (!response.ok) {
                 return {
                     success: false,
                     error: {
                         code: response.status,
-                        message: data.error?.message || `HTTP ${response.status}`,
+                        message: (parsed && parsed.error?.message) || response.statusText || `HTTP ${response.status}`,
                     },
                 };
             }
 
             return {
                 success: true,
-                data,
+                data: parsed,
             };
         } catch (error) {
             return {
@@ -335,6 +374,26 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         return createTextResponse({ data: result.data });
     }
 
+    private async getAvailableGenreSeeds(token: string, refresh_token: string): Promise<any>{
+        const result = await this.makeApiCall(`/recommendations/available-genre-seeds`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            return await this.getAvailableGenreSeeds(newAccessToken, refresh_token);
+        }
+
+        if(!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: result.data });
+    }
+
     private async getRecommendations(params: { seed_genres: string[]; limit?: number; market?: string }, token: string, refresh_token: string): Promise<any> {
         const searchParams = new URLSearchParams({
             seed_genres: params.seed_genres.join(','),
@@ -407,5 +466,235 @@ export class SpotifyAgent extends BaseAgentHandler<SpotifyTools> {
         }
     
         return createTextResponse({ data: result.data });
+    }
+
+    private async getCurrentUserPlaylists(params: { limit?: number; offset?: number }, token: string, refresh_token: string): Promise<any> {
+        const searchParams = new URLSearchParams({
+            ...(params.limit && { limit: params.limit.toString() }),
+            ...(params.offset && { offset: params.offset.toString() }),
+        });
+
+        const result = await this.makeApiCall(`/me/playlists?${searchParams}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            console.log("Refreshed token!: ", newAccessToken);
+            return await this.getCurrentUserPlaylists(params, newAccessToken, refresh_token);
+        }
+
+        if (!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: result.data });
+    }
+
+    private async addCustomPlaylistCoverImage(params: { playlist_id: string; image_base64: string }, token: string, refresh_token: string): Promise<any> {
+        try {
+            const response = await fetch(`${this.baseUrl}/playlists/${params.playlist_id}/images`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'image/jpeg',
+                },
+                body: params.image_base64,
+            });
+
+            // If token expired, refresh and retry once
+            if(response.status === 401) {
+                const newAccessToken = await refreshToken(refresh_token);
+                if(!newAccessToken) {
+                    return createErrorResponse('Failed to refresh token', 401);
+                }
+                return await this.addCustomPlaylistCoverImage(params, newAccessToken, refresh_token);
+            }
+
+            if(!response.ok) {
+                // Attempt to parse error JSON if any
+                let message = response.statusText || `HTTP ${response.status}`;
+                try {
+                    const errJson = await response.json();
+                    message = errJson.error?.message || message;
+                } catch(_) {/* ignore parse errors */}
+                return createErrorResponse(message, response.status);
+            }
+
+            // Successful upload (202)
+            return createTextResponse({ data: { message: 'Image uploaded', status: response.status } });
+
+        } catch(error) {
+            return createErrorResponse(error instanceof Error ? error.message : 'Network error', 500);
+        }
+    }
+    
+    private async checkUserSavedTracks(params: { track_ids: string[] }, token: string, refresh_token: string): Promise<any> {
+        const ids = params.track_ids.join(',');
+        const result = await this.makeApiCall(`/me/tracks/contains?ids=${ids}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            return await this.checkUserSavedTracks(params, newAccessToken, refresh_token);
+        }
+
+        if(!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: result.data });
+    }
+
+    private async getUserSavedTracks(params: { limit?: number; offset?: number; market?: string }, token: string, refresh_token: string): Promise<any> {
+        const searchParams = new URLSearchParams({
+            ...(params.limit && { limit: params.limit.toString() }),
+            ...(params.offset && { offset: params.offset.toString() }),
+            ...(params.market && { market: params.market }),
+        });
+
+        const result = await this.makeApiCall(`/me/tracks?${searchParams}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            return await this.getUserSavedTracks(params, newAccessToken, refresh_token);
+        }
+
+        if(!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: result.data });
+    }
+
+    private async getNewReleases(params: { limit?: number; offset?: number; country?: string }, token: string, refresh_token: string): Promise<any> {
+        const searchParams = new URLSearchParams({
+            ...(params.country && { country: params.country }),
+            ...(params.limit && { limit: params.limit.toString() }),
+            ...(params.offset && { offset: params.offset.toString() }),
+        });
+
+        const result = await this.makeApiCall(`/browse/new-releases?${searchParams}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            return await this.getNewReleases(params, newAccessToken, refresh_token);
+        }
+
+        if(!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: result.data });
+    }
+
+    private async saveAlbumForUser(params: { album_ids: string[] }, token: string, refresh_token: string): Promise<any> {
+        const ids = params.album_ids.join(',');
+        const result = await this.makeApiCall(`/me/albums?ids=${ids}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse('Failed to refresh token', 401);
+            }
+            return await this.saveAlbumForUser(params, newAccessToken, refresh_token);
+        }
+
+        if(!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: { message: 'Albums saved', status: 200 } });
+    }
+
+    private async getArtistAlbums(params: { artist_id: string; include_groups?: string; market?: string; limit?: number; offset?: number }, token: string, refresh_token: string): Promise<any> {
+        const { artist_id, include_groups, market, limit, offset } = params;
+        const searchParams = new URLSearchParams({
+            ...(include_groups && { include_groups }),
+            ...(market && { market }),
+            ...(limit && { limit: limit.toString() }),
+            ...(offset && { offset: offset.toString() }),
+        });
+
+        const result = await this.makeApiCall(`/artists/${artist_id}/albums?${searchParams}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            return await this.getArtistAlbums(params, newAccessToken, refresh_token);
+        }
+
+        if(!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: result.data });
+    }
+
+    private async getArtistTopTracks(params: { artist_id: string; market: string }, token: string, refresh_token: string): Promise<any> {
+        const { artist_id, market } = params;
+        const result = await this.makeApiCall(`/artists/${artist_id}/top-tracks?market=${market}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse("Failed to refresh token", 401);
+            }
+            return await this.getArtistTopTracks(params, newAccessToken, refresh_token);
+        }
+
+        if(!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: result.data });
+    }
+
+    private async saveTrackForUser(params: { track_ids: string[] }, token: string, refresh_token: string): Promise<any> {
+        const ids = params.track_ids.join(',');
+        const result = await this.makeApiCall(`/me/tracks?ids=${ids}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if(result.error?.code === 401) {
+            const newAccessToken = await refreshToken(refresh_token);
+            if(!newAccessToken) {
+                return createErrorResponse('Failed to refresh token', 401);
+            }
+            return await this.saveTrackForUser(params, newAccessToken, refresh_token);
+        }
+
+        if(!result.success) {
+            return createErrorResponse(result.error!.message, result.error!.code);
+        }
+
+        return createTextResponse({ data: { message: 'Tracks saved', status: 200 } });
     }
 }

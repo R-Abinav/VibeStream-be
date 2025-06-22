@@ -59,7 +59,7 @@ app.get('/health', (req, res) => {
 app.get('/api/spotify-login', (req, res) => {
     try{
         console.log("Spotify Login");
-        const scope = 'user-read-recently-played user-read-private user-read-email user-top-read playlist-modify-private playlist-read-private user-read-playback-state playlist-modify-public';
+        const scope = 'user-read-recently-played user-read-private user-read-email user-top-read playlist-modify-private playlist-read-private user-read-playback-state playlist-modify-public ugc-image-upload user-library-read user-library-modify';
         const state = generateSecureState();
 
         const authUrl = 'https://accounts.spotify.com/authorize?' + querystring.stringify({
